@@ -1,0 +1,47 @@
+<resources>
+    <string name="app_name">Thali Native Test</string>
+
+    <string name="action_connect">Connect</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="action_send_data">Send data</string>
+    <string name="action_kill_all_connections">Kill all connections</string>
+    <string name="action_start_bluetooth_device_discovery">Start Bluetooth device discovery</string>
+    <string name="action_make_device_discoverable">Make device discoverable</string>
+
+    <string name="rfcomm_port_info">Use -1 to let the platform decide or 0 for rotating port number</string>
+    <string name="manufacturer_id">Manufacturer ID</string>
+    <string name="beacon_ad_extra_information">Extra information</string>
+    <string name="beacon_ad_extra_information_description">Extra unsigned 8-bit integer for beacon advertisement data. Use 0 for no extra information.</string>
+    <string name="advertisement_data_type">Advertisement data type (BLE only)</string>
+    <string name="service">service</string>
+    <string name="manufacturer">manufacturer</string>
+    <string name="do_not_care">don\'t care</string>
+    <string name="do_not_care_info">In \"don\'t care\" mode, the data type to advertise will be \"service\", but \"manufacturer\" will be used as a fallback. The app will scan and parse both \"service\" and \"manufacturer\" data based advertisements.</string>
+
+    <string-array name="advertise_mode_string_array">
+        <item>ADVERTISE_MODE_LOW_POWER</item>
+        <item>ADVERTISE_MODE_BALANCED</item>
+        <item>ADVERTISE_MODE_LOW_LATENCY</item>
+    </string-array>
+
+    <string-array name="advertise_tx_power_level_string_array">
+        <item>ADVERTISE_TX_POWER_ULTRA_LOW</item>
+        <item>ADVERTISE_TX_POWER_LOW</item>
+        <item>ADVERTISE_TX_POWER_MEDIUM</item>
+        <item>ADVERTISE_TX_POWER_HIGH</item>
+    </string-array>
+
+    <string-array name="scan_mode_string_array">
+        <item>SCAN_MODE_LOW_POWER</item>
+        <item>SCAN_MODE_BALANCED</item>
+        <item>SCAN_MODE_LOW_LATENCY</item>
+    </string-array>
+
+    <string name="peer_name_info">After changing the peer name restarting the app is required for the setting to take effect.</string>
+
+    <string name="run_test">Run test</string>
+
+    <string name="battery_test">Battery test</string>
+    <string name="stop_battery_test">Stop battery test</string>
+    <string name="run_test_connect_for_all">Run test connect for all peers</string>
+</resources>
