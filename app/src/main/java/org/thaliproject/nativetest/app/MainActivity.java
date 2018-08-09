@@ -4,7 +4,12 @@
 package org.thaliproject.nativetest.app;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
@@ -84,7 +89,18 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
         mLogFragment = new LogFragment();
 
         mSettingsFragment = new SettingsFragment();
+        if (Build.VERSION.SDK_INT>Build.VERSION_CODES.LOLLIPOP_MR1) {
+            String pkg=getPackageName();
+            PowerManager pm=getSystemService(PowerManager.class);
 
+            if (!pm.isIgnoringBatteryOptimizations(pkg)) {
+                Intent i=
+                        new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                                .setData(Uri.parse("package:"+pkg));
+
+                startActivity(i);
+            }
+        }
         createAndStartEngine();
     }
 

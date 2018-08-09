@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NativeTestApp.iml" filepath="$PROJECT_DIR$/NativeTestApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ble-discovery-background-demo.iml" filepath="$PROJECT_DIR$/ble-discovery-background-demo.iml" />
       <module fileurl="file://$PROJECT_DIR$/btconnectorlib2/btconnectorlib2.iml" filepath="$PROJECT_DIR$/btconnectorlib2/btconnectorlib2.iml" />
     </modules>
   </component>
