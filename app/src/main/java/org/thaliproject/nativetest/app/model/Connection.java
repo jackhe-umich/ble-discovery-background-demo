@@ -24,7 +24,7 @@ public class Connection implements BluetoothSocketIoThread.Listener {
 
     private static final String TAG = Connection.class.getName();
     public static final int DEFAULT_SOCKET_IO_THREAD_BUFFER_SIZE_IN_BYTES = 1024 * 10;
-    public static final long DEFAULT_DATA_AMOUNT_IN_BYTES = 1024 * 1024;
+    public static final long DEFAULT_DATA_AMOUNT_IN_BYTES = 64;
     private static final int REPORT_PROGRESS_INTERVAL_IN_MILLISECONDS = 1000;
     private static final byte[] PING_PACKAGE = new String("Is there anybody out there?").getBytes();
     private Listener mListener = null;
