@@ -1,6 +1,8 @@
 package org.thaliproject.nativetest.app.utils;
 
+import android.content.Context;
 import android.os.PowerManager;
+import android.support.annotation.NonNull;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -10,6 +12,7 @@ import java.util.logging.Logger;
 //import javax.annotation.Nullable;
 //import javax.annotation.concurrent.ThreadSafe;
 
+import static android.content.Context.POWER_SERVICE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.logging.Level.INFO;
 
@@ -26,73 +29,115 @@ public class RenewableWakeLock {
      */
     private static final int SAFETY_MARGIN_MS = 10_000;
 
+    private final Context context;
     private final PowerManager powerManager;
-    private final ScheduledExecutorService scheduler;
-    private final int levelAndFlags;
-    private final String tag;
-    private final long durationMs;
-    private final Runnable renewTask;
-
+    private String tag;
+    private long duration;
     private final Object lock = new Object();
-    //@Nullable
-    private PowerManager.WakeLock wakeLock; // Locking: lock
-    //@Nullable
-    private ScheduledFuture future; // Locking: lock
 
-    public RenewableWakeLock(PowerManager powerManager,
-                             ScheduledExecutorService scheduler, int levelAndFlags, String tag,
-                             long duration, TimeUnit timeUnit) {
-        this.powerManager = powerManager;
-        this.scheduler = scheduler;
-        this.levelAndFlags = levelAndFlags;
+    @NonNull
+    private PowerManager.WakeLock wakeLock; // Locking: lock
+
+    /**
+     *  Constructor for RenewableWakeLock
+     * @param context The context of the activity, used to grab powerManager
+     * @param tag A string used to describe the WakeLock
+     * @param duration An integer of the time for the lock you want to grab for, in milliseconds
+     */
+    public RenewableWakeLock(Context context, String tag,
+                             long duration) {
+        this.context = context;
+        this.powerManager = (PowerManager) this.context.getSystemService(POWER_SERVICE);
         this.tag = tag;
-        durationMs = MILLISECONDS.convert(duration, timeUnit);
-        renewTask = this::renew;
+        setDuration(duration);
     }
 
+    /**
+     * Acquire the wakeLock, return instantly if it has been required
+     */
     public void acquire() {
         if (LOG.isLoggable(INFO)) LOG.info("Acquiring wake lock " + tag);
         synchronized (lock) {
-            if (wakeLock != null) {
+            if (wakeLock.isHeld()) {
                 LOG.info("Already acquired");
                 return;
             }
-            wakeLock = powerManager.newWakeLock(levelAndFlags, tag);
+
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP, tag);
             wakeLock.setReferenceCounted(false);
-            wakeLock.acquire(durationMs + SAFETY_MARGIN_MS);
-            future = scheduler.schedule(renewTask, durationMs, MILLISECONDS);
+            wakeLock.acquire(duration);
         }
     }
 
+    /**
+     * Create a new wake lock, acquire it and release the old one, return instantly if the lock was
+     * not held
+     */
     private void renew() {
         if (LOG.isLoggable(INFO)) LOG.info("Renewing wake lock " + tag);
         synchronized (lock) {
-            if (wakeLock == null) {
+            if (!wakeLock.isHeld()) {
                 LOG.info("Already released");
                 return;
             }
             PowerManager.WakeLock oldWakeLock = wakeLock;
-            wakeLock = powerManager.newWakeLock(levelAndFlags, tag);
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP, tag);
             wakeLock.setReferenceCounted(false);
-            wakeLock.acquire(durationMs + SAFETY_MARGIN_MS);
+            wakeLock.acquire(duration);
             oldWakeLock.release();
-            future = scheduler.schedule(renewTask, durationMs, MILLISECONDS);
         }
     }
 
+    /**
+     * Release the lock, return instantly if the lock has been released
+     */
     public void release() {
         if (LOG.isLoggable(INFO)) LOG.info("Releasing wake lock " + tag);
         synchronized (lock) {
-            if (wakeLock == null) {
+            if (!wakeLock.isHeld()) {
                 LOG.info("Already released");
                 return;
             }
-            if (future == null) throw new AssertionError();
-            future.cancel(false);
-            future = null;
             wakeLock.release();
-            wakeLock = null;
         }
+    }
+
+    /**
+     * Set WakeLock the Duration. The final duration set would be min{SAFTY_MARGIN(10ms), duration}
+     * @param duration An integer of the time you want to grab the lock for, in milliseconds
+     */
+    public void setDuration(long duration) {
+        if(duration < SAFETY_MARGIN_MS){
+            this.duration = SAFETY_MARGIN_MS;
+        }else{
+            this.duration = duration;
+        }
+    }
+
+    /**
+     * Set the tag of the wakeLock
+     * @param tag A string used to describe the wakeLock
+     */
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+    /**
+     * Return the duration of the wakeLock.
+     * @return A long as the duration
+     */
+    public long getDuration() {
+        return duration;
+    }
+
+    /**
+     * Return the tag describing the wakeLock
+     * @return A string used to describe the wakelock
+     */
+    public String getTag() {
+        return tag;
     }
 }
 
