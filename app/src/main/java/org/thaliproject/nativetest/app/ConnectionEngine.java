@@ -40,7 +40,7 @@ public class ConnectionEngine implements
     protected static final long CHECK_CONNECTIONS_INTERVAL_IN_MILLISECONDS = 10000;
     protected static final long RESTART_CONNECTION_MANAGER_DELAY_IN_MILLISECONDS = 10000;
     protected static final long NOTIFY_STATE_CHANGED_DELAY_IN_MILLISECONDS = 500;
-    protected static int DURATION_OF_DEVICE_DISCOVERABLE_IN_SECONDS = 60;
+    protected static int DURATION_OF_DEVICE_DISCOVERABLE_IN_SECONDS = 0;
     private static final int PERMISSION_REQUEST_ACCESS_COARSE_LOCATION = 1;
 
     protected Context mContext = null;

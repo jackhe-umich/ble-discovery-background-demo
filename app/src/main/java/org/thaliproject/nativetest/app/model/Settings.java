@@ -28,10 +28,10 @@ public class Settings {
     public static final String DEFAULT_PEER_NAME = Build.MANUFACTURER + "_" + Build.MODEL; // Use manufacturer and device model name as the peer name
     private static final int DEFAULT_MANUFACTURER_ID = 7413;
     private static final boolean DEFAULT_LISTEN_FOR_INCOMING_CONNECTIONS = true;
-    private static final boolean DEFAULT_ENABLE_WIFI_DISCOVERY = false;
+    private static final boolean DEFAULT_ENABLE_WIFI_DISCOVERY = true;
     private static final boolean DEFAULT_ENABLE_BLE_DISCOVERY = true;
-    private static final boolean DEFAULT_AUTO_CONNECT = false;
-    private static final boolean DEFAULT_AUTO_CONNECT_WHEN_INCOMING = false;
+    private static final boolean DEFAULT_AUTO_CONNECT = true;
+    private static final boolean DEFAULT_AUTO_CONNECT_WHEN_INCOMING = true;
 
     private static final String KEY_MANUFACTURER_ID = "app_manufacturer_id";
     private static final String KEY_LISTEN_FOR_INCOMING_CONNECTIONS = "listen_for_incoming_connections";
@@ -55,8 +55,8 @@ public class Settings {
     private String mPeerName = DEFAULT_PEER_NAME;
     private long mDataAmountInBytes = Connection.DEFAULT_DATA_AMOUNT_IN_BYTES;
     private int mBufferSizeInBytes = Connection.DEFAULT_SOCKET_IO_THREAD_BUFFER_SIZE_IN_BYTES;
-    private boolean mAutoConnect = false;
-    private boolean mAutoConnectEvenWhenIncomingConnectionEstablished = false;
+    private boolean mAutoConnect = true;
+    private boolean mAutoConnectEvenWhenIncomingConnectionEstablished = true;
     private boolean mLoaded = false;
 
     /**

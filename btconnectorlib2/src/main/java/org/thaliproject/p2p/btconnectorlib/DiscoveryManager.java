@@ -629,7 +629,7 @@ public class DiscoveryManager
 
             Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
             discoverableIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, durationInSeconds);
+            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3600);
             mContext.startActivity(discoverableIntent);
         }
     }
