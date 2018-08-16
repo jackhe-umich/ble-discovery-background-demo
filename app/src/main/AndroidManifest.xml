@@ -31,10 +31,6 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".DataTransferService"
-            android:enabled="true"
-            android:exported="true"></service>
     </application>
 
 </manifest>

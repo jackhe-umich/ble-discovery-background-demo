@@ -15,7 +15,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import org.thaliproject.nativetest.app.fragments.LogFragment;
 import org.thaliproject.nativetest.app.model.Connection;
 import org.thaliproject.nativetest.app.model.PeerAndConnectionModel;
 import org.thaliproject.nativetest.app.model.Settings;
@@ -26,7 +25,6 @@ import org.thaliproject.p2p.btconnectorlib.PeerProperties;
 import org.thaliproject.p2p.btconnectorlib.utils.BluetoothSocketIoThread;
 
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * This class is responsible for managing both peer discovery and connections.
@@ -37,10 +35,10 @@ public class ConnectionEngine implements
         Connection.Listener {
     protected static final String TAG = ConnectionEngine.class.getName();
 
-    protected static final long CHECK_CONNECTIONS_INTERVAL_IN_MILLISECONDS = 10000;
-    protected static final long RESTART_CONNECTION_MANAGER_DELAY_IN_MILLISECONDS = 10000;
-    protected static final long NOTIFY_STATE_CHANGED_DELAY_IN_MILLISECONDS = 500;
-    protected static int DURATION_OF_DEVICE_DISCOVERABLE_IN_SECONDS = 0;
+    protected static final long CHECK_CONNECTIONS_INTERVAL_IN_MILLISECONDS = 100;
+    protected static final long RESTART_CONNECTION_MANAGER_DELAY_IN_MILLISECONDS = 100;
+    protected static final long NOTIFY_STATE_CHANGED_DELAY_IN_MILLISECONDS = 50;
+    protected static int DURATION_OF_DEVICE_DISCOVERABLE_IN_SECONDS = 3600;
     private static final int PERMISSION_REQUEST_ACCESS_COARSE_LOCATION = 1;
 
     protected Context mContext = null;
@@ -94,7 +92,6 @@ public class ConnectionEngine implements
 
             if (!wasConnectionManagerStarted) {
                 Log.e(TAG, "start: Failed to start the connection manager");
-                LogFragment.logError("Failed to start the connection manager");
             }
         }
 
@@ -109,7 +106,6 @@ public class ConnectionEngine implements
 
             if (!shouldDiscoveryManagerBeRunning) {
                 Log.e(TAG, "start: Failed to start the discovery manager");
-                LogFragment.logError("Failed to start the discovery manager");
             }
         }
 
@@ -179,13 +175,11 @@ public class ConnectionEngine implements
 
         if (peerProperties != null) {
             if (mConnectionManager.connect(peerProperties)) {
-                LogFragment.logMessage("Trying to connect to peer " + peerProperties.toString());
                 mModel.addPeerBeingConnectedTo(peerProperties);
                 MainActivity.updateOptionsMenu();
             } else {
                 String errorMessageStub = "Failed to start connecting to peer ";
                 Log.e(TAG, "connect: " + errorMessageStub + peerProperties.toString());
-                LogFragment.logError(errorMessageStub + peerProperties.toString());
                 MainActivity.showToast(errorMessageStub + peerProperties.getBluetoothMacAddress());
             }
         }
@@ -219,9 +213,6 @@ public class ConnectionEngine implements
 
         if (connection != null) {
             connection.sendData();
-            LogFragment.logMessage("Sending "
-                    + String.format("%.2f", connection.getTotalDataAmountCurrentlySendingInMegaBytes())
-                    + " MB to peer " + peerProperties.toString());
             mModel.notifyListenersOnDataChanged(); // To update the progress bar
             MainActivity.updateOptionsMenu();
         } else {
@@ -270,8 +261,6 @@ public class ConnectionEngine implements
         restartNotifyStateChangedTimer();
 
         if (!mIsShuttingDown && connectionManagerState == ConnectionManager.ConnectionManagerState.NOT_STARTED) {
-            LogFragment.logError("Connection manager stopped - trying to restart in "
-                    + RESTART_CONNECTION_MANAGER_DELAY_IN_MILLISECONDS + " milliseconds");
 
             Handler handler = new Handler(mContext.getMainLooper());
 
@@ -323,7 +312,7 @@ public class ConnectionEngine implements
                 mModel.addOrUpdatePeer(peerProperties);
                 mDiscoveryManager.getPeerModel().addOrUpdateDiscoveredPeer(peerProperties);
             }
-            LogFragment.logMessage((isIncoming ? "Incoming" : "Outgoing") + " connection established to peer " + peerProperties.toString());
+            startSendingData(peerProperties);
         }
 
         final int totalNumberOfConnections = mModel.getTotalNumberOfConnections();
@@ -362,10 +351,8 @@ public class ConnectionEngine implements
             mModel.removePeerBeingConnectedTo(peerProperties);
 
             MainActivity.showToast("Failed to connect to " + peerProperties.getBluetoothMacAddress() + ": Connection timeout");
-            LogFragment.logError("Failed to connect to peer " + peerProperties.toString() + ": Connection timeout");
         } else {
             MainActivity.showToast("Failed to connect: Connection timeout");
-            LogFragment.logError("Failed to connect: Connection timeout");
         }
 
         MainActivity.updateOptionsMenu();
@@ -380,12 +367,10 @@ public class ConnectionEngine implements
 
             MainActivity.showToast("Failed to connect to " + peerProperties.getBluetoothMacAddress()
                     + ((errorMessage != null) ? (": " + errorMessage) : ""));
-            LogFragment.logError("Failed to connect to peer " + peerProperties.toString()
-                    + ((errorMessage != null) ? (": " + errorMessage) : ""));
 
         } else {
             MainActivity.showToast("Failed to connect" + ((errorMessage != null) ? (": " + errorMessage) : ""));
-            LogFragment.logError("Failed to connect" + ((errorMessage != null) ? (": " + errorMessage) : ""));
+
         }
 
         MainActivity.updateOptionsMenu();
@@ -437,7 +422,6 @@ public class ConnectionEngine implements
     @Override
     public void onBluetoothMacAddressResolved(String bluetoothMacAddress) {
         Log.i(TAG, "onBluetoothMacAddressResolved: " + bluetoothMacAddress);
-        LogFragment.logMessage("Bluetooth MAC address resolved: " + bluetoothMacAddress);
         start();
     }
 
@@ -446,7 +430,6 @@ public class ConnectionEngine implements
         Log.i(TAG, "onPeerDiscovered: " + peerProperties.toString());
 
         if (mModel.addOrUpdatePeer(peerProperties)) {
-            LogFragment.logMessage("Peer " + peerProperties.toString() + " discovered");
             autoConnectIfEnabled(peerProperties);
         }
     }
@@ -455,7 +438,6 @@ public class ConnectionEngine implements
     public void onPeerUpdated(PeerProperties peerProperties) {
         Log.i(TAG, "onPeerUpdated: " + peerProperties.toString());
         mModel.addOrUpdatePeer(peerProperties);
-        LogFragment.logMessage("Peer " + peerProperties.toString() + " updated");
     }
 
     @Override
@@ -467,7 +449,6 @@ public class ConnectionEngine implements
             mDiscoveryManager.getPeerModel().addOrUpdateDiscoveredPeer(peerProperties);
         } else {
             mModel.removePeer(peerProperties);
-            LogFragment.logMessage("Peer " + peerProperties.toString() + " lost");
         }
     }
 
@@ -523,7 +504,6 @@ public class ConnectionEngine implements
         }
 
         MainActivity.showToast(peerName + " disconnected (was " + (wasIncoming ? "incoming" : "outgoing") + ")");
-        LogFragment.logMessage("Peer " + peerProperties.toString() + " disconnected (was " + (wasIncoming ? "incoming" : "outgoing") + ")");
     }
 
     @Override
@@ -538,7 +518,6 @@ public class ConnectionEngine implements
                 + " MB with transfer speed of " + String.format("%.3f", transferSpeed) + " MB/s";
 
         Log.i(TAG, "onDataSent: " + message + " to peer " + receivingPeer);
-        LogFragment.logMessage(message + " to peer " + receivingPeer);
         MainActivity.showToast(message + " to peer " + receivingPeer.getBluetoothMacAddress());
         mModel.notifyListenersOnDataChanged(); // To update the progress bar
         MainActivity.updateOptionsMenu();
@@ -605,7 +584,6 @@ public class ConnectionEngine implements
                         ? "advertising" : "not advertising");
                 String message = stringBuilder.toString();
 
-                LogFragment.logMessage(message);
                 MainActivity.showToast(message);
             }
         };

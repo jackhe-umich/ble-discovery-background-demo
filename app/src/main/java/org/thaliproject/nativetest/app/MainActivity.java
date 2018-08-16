@@ -3,42 +3,29 @@
  */
 package org.thaliproject.nativetest.app;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.os.Bundle;
-import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.thaliproject.nativetest.app.fragments.LogFragment;
-import org.thaliproject.nativetest.app.fragments.PeerListFragment;
-import org.thaliproject.nativetest.app.fragments.SettingsFragment;
-import org.thaliproject.nativetest.app.fragments.TestsFragment;
 import org.thaliproject.nativetest.app.model.PeerAndConnectionModel;
-import org.thaliproject.nativetest.app.slidingtabs.SlidingTabLayout;
-import org.thaliproject.nativetest.app.test.TestListener;
-import org.thaliproject.nativetest.app.utils.MenuUtils;
 import org.thaliproject.p2p.btconnectorlib.PeerProperties;
 
-import java.util.Calendar;
-
-public class MainActivity extends AppCompatActivity implements PeerListFragment.Listener,
-        ActivityCompat.OnRequestPermissionsResultCallback, TestListener {
+public class MainActivity extends AppCompatActivity implements
+        ActivityCompat.OnRequestPermissionsResultCallback, PeerAndConnectionModel.Listener {
 
     private static final String TAG = MainActivity.class.getName();
 
@@ -46,29 +33,9 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
     private static Context mContext = null;
 
     private ConnectionEngine mConnectionEngine = null;
-    private TestEngine mTestEngine = null;
-    private BatteryEngine mBatteryEngine = null;
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
-    private MyFragmentAdapter mMyFragmentAdapter;
 
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
-    private ViewPager mViewPager;
 
-    private SlidingTabLayout mSlidingTabLayout;
-    private PeerListFragment mPeerListFragment = null;
-    private LogFragment mLogFragment = null;
-    private SettingsFragment mSettingsFragment = null;
-    private TestsFragment mTestsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,17 +49,9 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
         // Set up the action bar.
         final ActionBar actionBar = getSupportActionBar();
 
-        mMyFragmentAdapter = new MyFragmentAdapter(getSupportFragmentManager(), this);
 
-        mViewPager = (ViewPager) findViewById(R.id.pager);
-        mViewPager.setAdapter(mMyFragmentAdapter);
 
-        mSlidingTabLayout = (SlidingTabLayout) findViewById(R.id.sliding_tabs);
-        mSlidingTabLayout.setViewPager(mViewPager);
 
-        mLogFragment = new LogFragment();
-
-        mSettingsFragment = new SettingsFragment();
         if (Build.VERSION.SDK_INT>Build.VERSION_CODES.LOLLIPOP_MR1) {
             String pkg=getPackageName();
             PowerManager pm=getSystemService(PowerManager.class);
@@ -106,26 +65,27 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
             }
         }
 
-
-        /** this gives us the time for the first trigger.  */
-        Calendar cal = Calendar.getInstance();
-        AlarmManager am = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-        long interval = 1000 * 5; // 5 seconds in milliseconds
-        Intent serviceIntent = new Intent(mContext, DataTransferService.class);
-        // make sure you **don't** use *PendingIntent.getBroadcast*, it wouldn't work
-        PendingIntent servicePendingIntent =
-                PendingIntent.getService(mContext,
-                        DataTransferService.SERVICE_ID, // integer constant used to identify the service
-                        serviceIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT);  // FLAG to avoid creating a second service if there's already one running
-        // there are other options like setInexactRepeating, check the docs
-        am.setRepeating(
-                AlarmManager.RTC_WAKEUP,//type of alarm. This one will wake up the device when it goes off, but there are others, check the docs
-                cal.getTimeInMillis(),
-                interval,
-                servicePendingIntent
-        );
         createAndStartEngine();
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(mThisInstance,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Permission is not granted
+            // Should we show an explanation?
+
+                // No explanation needed; request the permission
+            ActivityCompat.requestPermissions(mThisInstance,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    0);
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+        }
+
+        mConnectionEngine.makeDeviceDiscoverable();
+        mConnectionEngine.startBluetoothDeviceDiscovery();
     }
 
     /**
@@ -166,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
         Log.i(TAG, "onRestart");
         super.onRestart();
         mConnectionEngine.start();
+        mConnectionEngine.makeDeviceDiscoverable();
+        mConnectionEngine.startBluetoothDeviceDiscovery();
     }
 
     @Override
@@ -185,83 +147,7 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        if (mPeerListFragment != null) {
-            MenuUtils.PeerMenuItemsAvailability availability =
-                    MenuUtils.resolvePeerMenuItemsAvailability(
-                            mPeerListFragment.getSelectedPeerProperties(), PeerAndConnectionModel.getInstance());
-
-            MenuItem connectMenuItem = menu.getItem(0);
-            MenuItem sendDataMenuItem = menu.getItem(1);
-            MenuItem disconnectMenuItem = menu.getItem(2);
-            MenuItem killAllConnectionsMenuItem = menu.getItem(3);
-
-            connectMenuItem.setVisible(availability.connectMenuItemAvailable);
-            connectMenuItem.setEnabled(availability.connectMenuItemAvailable);
-            sendDataMenuItem.setVisible(availability.sendDataMenuItemAvailable);
-            sendDataMenuItem.setEnabled(availability.sendDataMenuItemAvailable);
-            disconnectMenuItem.setEnabled(availability.disconnectMenuItemAvailable);
-            killAllConnectionsMenuItem.setEnabled(availability.killAllConnectionsMenuItemAvailable);
-            return true;
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        boolean wasConsumed = false;
-        PeerProperties peerProperties = null;
-
-        if (mPeerListFragment != null) {
-            peerProperties = mPeerListFragment.getSelectedPeerProperties();
-        }
-
-        PeerAndConnectionModel model = PeerAndConnectionModel.getInstance();
-
-        switch (id) {
-            case R.id.action_connect:
-                onConnectRequest(peerProperties); // Has a null check
-                wasConsumed = true;
-                break;
-            case R.id.action_disconnect:
-                if (peerProperties != null) {
-                    if (model.closeConnection(peerProperties)) {
-                        wasConsumed = true;
-                    }
-                }
-
-                break;
-            case R.id.action_send_data:
-                onSendDataRequest(peerProperties); // Has a null check
-                wasConsumed = true;
-                break;
-            case R.id.action_kill_all_connections:
-                model.closeAllConnections();
-                wasConsumed = true;
-                break;
-            case R.id.action_start_bluetooth_device_discovery:
-                mConnectionEngine.startBluetoothDeviceDiscovery();
-                break;
-            case R.id.action_make_device_discoverable:
-                mConnectionEngine.makeDeviceDiscoverable();
-                break;
-            case R.id.action_reset:
-                destroyEngine();
-                createAndStartEngine();
-                break;
-        }
-
-        return wasConsumed || super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -269,51 +155,12 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
         mConnectionEngine.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    @Override
-    public void onPeerSelected(PeerProperties peerProperties) {
-        updateOptionsMenu();
-    }
-
-    @Override
-    public void onConnectRequest(PeerProperties peerProperties) {
-        Log.d(TAG, "onConnectRequest: " + peerProperties);
-        mConnectionEngine.connect(peerProperties);
-    }
-
-    @Override
-    public void onSendDataRequest(PeerProperties peerProperties) {
-        mConnectionEngine.startSendingData(peerProperties);
-    }
-
-    @Override
-    public void onTestStarting(String testName) {
-        Log.i(TAG, "onTestStarting: " + testName);
-        mConnectionEngine.stop();
-        LogFragment.logTestEngineMessage("Starting test \"" + testName + "\"");
-    }
-
-    @Override
-    public void onTestFinished(String testName, float successRate, String results) {
-        int successRateInPercentages = Math.round(successRate * 100);
-        Log.i(TAG, "onTestFinished: Test \"" + testName + "\" finished with success rate of " + successRateInPercentages + " %");
-        LogFragment.logTestEngineMessage("Test \"" + testName + "\" finished with success rate of " + successRateInPercentages + " % - Results: " + results);
-        showToast("Test \"" + testName + "\" finished with success rate of " + successRateInPercentages + " %");
-        mConnectionEngine.start();
-    }
 
     private void createAndStartEngine() {
         if (mConnectionEngine == null) {
             mConnectionEngine = new ConnectionEngine(mContext, this);
             mConnectionEngine.bindSettings();
         }
-
-        if (mTestEngine == null) {
-            mTestEngine = new TestEngine(mContext, this, this);
-        }
-        if (mBatteryEngine == null) {
-            mBatteryEngine = new BatteryEngine(mContext, this, this);
-        }
-
 
         mConnectionEngine.start();
     }
@@ -323,88 +170,15 @@ public class MainActivity extends AppCompatActivity implements PeerListFragment.
             mConnectionEngine.dispose();
             mConnectionEngine = null;
         }
-
-        if (mTestEngine != null) {
-            mTestEngine.dispose();
-            mTestEngine = null;
-        }
-
-        if (mBatteryEngine != null) {
-            mBatteryEngine.dispose();
-            mBatteryEngine = null;
-        }
-    }
-
-    /**
-     * The fragment adapter for tabs.
-     */
-    public class MyFragmentAdapter extends FragmentPagerAdapter {
-        private static final int PEER_LIST_FRAGMENT = 0;
-        private static final int LOG_FRAGMENT = 1;
-        private static final int SETTINGS_FRAGMENT = 2;
-        private static final int TESTS_FRAGMENT = 3;
-        private final MainActivity mMainActivity;
-
-        public MyFragmentAdapter(FragmentManager fragmentManager, MainActivity mainActivity) {
-            super(fragmentManager);
-            mMainActivity = mainActivity;
-        }
-
-        @Override
-        public Fragment getItem(int index) {
-            switch (index) {
-                case PEER_LIST_FRAGMENT:
-                    mPeerListFragment = new PeerListFragment();
-                    mPeerListFragment.setListener(mMainActivity);
-                    mPeerListFragment.setTestListener(new PeerListFragment.ConnectTimeTestListener() {
-                        @Override
-                        public void onTestStarted() {
-                            mConnectionEngine.mDiscoveryManager.stop();
-                        }
-                    });
-                    return mPeerListFragment;
-                case LOG_FRAGMENT:
-                    return mLogFragment;
-                case SETTINGS_FRAGMENT:
-                    return mSettingsFragment;
-                case TESTS_FRAGMENT:
-                    mTestsFragment = new TestsFragment();
-                    mTestsFragment.setTestEngine(mTestEngine, mBatteryEngine);
-                    return mTestsFragment;
-            }
-
-            return null;
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case PEER_LIST_FRAGMENT:
-                    return "Peers";
-                case LOG_FRAGMENT:
-                    return "Log";
-                case SETTINGS_FRAGMENT:
-                    return "Settings";
-                case TESTS_FRAGMENT:
-                    return "Tests";
-            }
-
-            return super.getPageTitle(position);
-        }
-
-        @Override
-        public int getCount() {
-            return 4;
-        }
     }
 
     @Override
-    public void onTestStarting() {
-        mConnectionEngine.stop();
+    public void onDataChanged() {
+
     }
 
     @Override
-    public void onTestFinished() {
-        mConnectionEngine.start();
+    public void onPeerRemoved(PeerProperties peerProperties) {
+
     }
 }
