@@ -14,38 +14,21 @@
 
 package org.thaliproject.nativetest.app;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ScheduledService extends Service
   implements Runnable {
-  private static final String CHANNEL_WHATEVER="channel_whatever";
-  private static int NOTIFY_ID=1337;
-  private Random rng=new Random();
   private ScheduledExecutorService sched=
     Executors.newSingleThreadScheduledExecutor();
   private PowerManager.WakeLock wakeLock;
-  private File log;
-
+    private ConnectionEngine mConnectionEngine = null;
   @Override
   public void onCreate() {
     super.onCreate();
@@ -55,13 +38,14 @@ public class ScheduledService extends Service
     wakeLock=mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
       getClass().getSimpleName());
     wakeLock.acquire();
-
-    sched.scheduleAtFixedRate(this, 0, 15, TimeUnit.SECONDS);
+    createAndStartEngine();
+    sched.scheduleAtFixedRate(this, 0, 9, TimeUnit.SECONDS);
   }
 
   @Override
   public void run() {
-    //TODO: do the job here
+      mConnectionEngine.startBluetoothDeviceDiscovery();
+      mConnectionEngine.makeDeviceDiscoverable();
   }
 
   @Override
@@ -69,13 +53,24 @@ public class ScheduledService extends Service
     sched.shutdownNow();
     wakeLock.release();
     stopForeground(true);
-
+    mConnectionEngine.dispose();
     super.onDestroy();
   }
 
   @Override
   public IBinder onBind(Intent intent) {
     throw new IllegalStateException("Go away");
+  }
+
+  private void createAndStartEngine() {
+    if (mConnectionEngine == null) {
+      mConnectionEngine = new ConnectionEngine(getApplicationContext());
+      mConnectionEngine.bindSettings();
+    }
+
+    mConnectionEngine.start();
+    mConnectionEngine.startBluetoothDeviceDiscovery();
+    mConnectionEngine.makeDeviceDiscoverable();
   }
 
 }
