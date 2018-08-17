@@ -135,14 +135,14 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onStop() {
         Log.i(TAG, "onStop");
-        mConnectionEngine.stop();
+        //mConnectionEngine.stop();
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
-        destroyEngine();
+        //destroyEngine();
         super.onDestroy();
     }
 
