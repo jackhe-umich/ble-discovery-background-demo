@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        createAndStartEngine();
+        //createAndStartEngine();
 
         // Here, thisActivity is the current activity
         if (ContextCompat.checkSelfPermission(mThisInstance,
@@ -84,8 +84,10 @@ public class MainActivity extends AppCompatActivity implements
             // result of the request.
         }
 
-        mConnectionEngine.makeDeviceDiscoverable();
-        mConnectionEngine.startBluetoothDeviceDiscovery();
+        //mConnectionEngine.makeDeviceDiscoverable();
+        //mConnectionEngine.startBluetoothDeviceDiscovery();
+        Intent startServiceIntent = new Intent(this, BackgroundConnectionService.class);
+        startService(startServiceIntent);
     }
 
     /**
@@ -125,9 +127,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onRestart() {
         Log.i(TAG, "onRestart");
         super.onRestart();
-        mConnectionEngine.start();
-        mConnectionEngine.makeDeviceDiscoverable();
-        mConnectionEngine.startBluetoothDeviceDiscovery();
+        //mConnectionEngine.start();
+        //mConnectionEngine.makeDeviceDiscoverable();
+        //mConnectionEngine.startBluetoothDeviceDiscovery();
     }
 
     @Override

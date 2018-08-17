@@ -66,6 +66,16 @@ public class ConnectionEngine implements
                 ConnectionSettings.SERVICE_NAME);
     }
 
+    public ConnectionEngine(Context context) {
+        mContext = context;
+        mModel = PeerAndConnectionModel.getInstance();
+
+        mConnectionManager = new ConnectionManager(mContext, this, ConnectionSettings.SERVICE_UUID,
+                ConnectionSettings.SERVICE_NAME);
+        mDiscoveryManager = new DiscoveryManager(mContext, this, ConnectionSettings.SERVICE_UUID,
+                ConnectionSettings.SERVICE_NAME);
+    }
+
     /**
      * Loads the settings and binds the discovery manager to the settings instance.
      */
