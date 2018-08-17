@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity implements
         //mConnectionEngine.start();
         //mConnectionEngine.makeDeviceDiscoverable();
         //mConnectionEngine.startBluetoothDeviceDiscovery();
+        Intent startServiceIntent = new Intent(this, BackgroundConnectionService.class);
+        startService(startServiceIntent);
     }
 
     @Override
