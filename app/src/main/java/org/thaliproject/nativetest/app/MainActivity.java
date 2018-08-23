@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements
             // app-defined int constant. The callback method gets the
             // result of the request.
         }
-
+        mConnectionManager = new ConnectionManager(mContext);
         mConnectionManager.startConnection("This is the thing I want to send");
     }
 
@@ -127,8 +127,8 @@ public class MainActivity extends AppCompatActivity implements
         //mConnectionEngine.start();
         //mConnectionEngine.makeDeviceDiscoverable();
         //mConnectionEngine.startBluetoothDeviceDiscovery();
-        Intent startServiceIntent = new Intent(this, BackgroundConnectionService.class);
-        startService(startServiceIntent);
+        mConnectionManager = new ConnectionManager(mContext);
+        mConnectionManager.startConnection("This is the thing I want to send");
     }
 
     @Override
