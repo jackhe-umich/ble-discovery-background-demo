@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements
     private static MainActivity mThisInstance = null;
     private static Context mContext = null;
 
-    private ConnectionEngine mConnectionEngine = null;
+    private ConnectionManager mConnectionManager;
 
 
 
@@ -84,10 +84,7 @@ public class MainActivity extends AppCompatActivity implements
             // result of the request.
         }
 
-        //mConnectionEngine.makeDeviceDiscoverable();
-        //mConnectionEngine.startBluetoothDeviceDiscovery();
-        Intent startServiceIntent = new Intent(this, BackgroundConnectionService.class);
-        startService(startServiceIntent);
+        mConnectionManager.startConnection("This is the thing I want to send");
     }
 
     /**
@@ -154,25 +151,9 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        mConnectionEngine.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
 
-    private void createAndStartEngine() {
-        if (mConnectionEngine == null) {
-            mConnectionEngine = new ConnectionEngine(mContext, this);
-            mConnectionEngine.bindSettings();
-        }
-
-        mConnectionEngine.start();
-    }
-
-    private void destroyEngine() {
-        if (mConnectionEngine != null) {
-            mConnectionEngine.dispose();
-            mConnectionEngine = null;
-        }
-    }
 
     @Override
     public void onDataChanged() {

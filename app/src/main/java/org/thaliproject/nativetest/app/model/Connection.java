@@ -126,13 +126,14 @@ public class Connection implements BluetoothSocketIoThread.Listener {
     /**
      * Starts sending large amount of data.
      */
-    public void sendData() {
+    public void sendData(byte[] dataToSend) {
         Settings settings = Settings.getInstance(null);
 
         if (settings != null) {
-            mDataSenderHelper = new DataSenderHelper(settings.getDataAmount());
+            mDataSenderHelper = new DataSenderHelper(dataToSend.length, dataToSend);
         } else {
-            mDataSenderHelper = new DataSenderHelper(DEFAULT_DATA_AMOUNT_IN_BYTES);
+            mDataSenderHelper = new DataSenderHelper(new String("Empty").getBytes().length,
+                                                new String("Empty").getBytes());
         }
 
         Log.i(TAG, "sendData: Sending data now...");
@@ -271,7 +272,8 @@ public class Connection implements BluetoothSocketIoThread.Listener {
         private long mStartTime = 0;
         private long mEndTime = 0;
 
-        public DataSenderHelper(long dataAmount) {
+        public DataSenderHelper(long dataAmount, byte[] dataChunkToSend) {
+            mDataChunk = dataChunkToSend.clone();
             mDataAmount = dataAmount;
             mDataAmountLeft = mDataAmount;
             mDataAmountInMegaBytes = (double)mDataAmount / (1024 * 1024);

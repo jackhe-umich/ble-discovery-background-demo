@@ -51,7 +51,8 @@ public class ConnectionEngine implements
     protected CountDownTimer mNotifyStateChangedTimer = null;
     private AlertDialog mAlertDialog = null;
     private boolean mIsShuttingDown = false;
-
+    private byte[] dataToSend;
+    private byte[] bytesRead;
     /**
      * Constructor.
      */
@@ -74,6 +75,14 @@ public class ConnectionEngine implements
                 ConnectionSettings.SERVICE_NAME);
         mDiscoveryManager = new DiscoveryManager(mContext, this, ConnectionSettings.SERVICE_UUID,
                 ConnectionSettings.SERVICE_NAME);
+    }
+
+    public byte[] getDataToSend() {
+        return dataToSend;
+    }
+
+    public void setDataToSend(byte[] dataToSend) {
+        this.dataToSend = dataToSend;
     }
 
     /**
@@ -214,7 +223,7 @@ public class ConnectionEngine implements
      *
      * @param peerProperties The properties of the peer to send data to.
      */
-    public synchronized void startSendingData(PeerProperties peerProperties) {
+    public synchronized void startSendingData(PeerProperties peerProperties, byte[] dataToSend) {
         Connection connection = mModel.getConnectionToPeer(peerProperties, false);
 
         if (connection == null) {
@@ -222,7 +231,7 @@ public class ConnectionEngine implements
         }
 
         if (connection != null) {
-            connection.sendData();
+            connection.sendData(dataToSend);
             mModel.notifyListenersOnDataChanged(); // To update the progress bar
             MainActivity.updateOptionsMenu();
         } else {
@@ -322,7 +331,7 @@ public class ConnectionEngine implements
                 mModel.addOrUpdatePeer(peerProperties);
                 mDiscoveryManager.getPeerModel().addOrUpdateDiscoveredPeer(peerProperties);
             }
-            startSendingData(peerProperties);
+            startSendingData(peerProperties,dataToSend);
         }
 
         final int totalNumberOfConnections = mModel.getTotalNumberOfConnections();
@@ -467,11 +476,22 @@ public class ConnectionEngine implements
         Log.v(TAG, "onBytesRead: Received " + numberOfBytesRead + " bytes from peer "
                 + (bluetoothSocketIoThread.getPeerProperties() != null
                 ? bluetoothSocketIoThread.getPeerProperties().toString() : "<no ID>"));
+        byte[] newBytesRead = new byte[bytesRead.length + bytes.length];
+        System.arraycopy(bytesRead,0, newBytesRead, 0,bytesRead.length);
+        System.arraycopy(bytes, 0, newBytesRead, bytesRead.length, bytes.length);
+        bytesRead = newBytesRead;
+        Log.i("On Bytes Read", new String(bytes));
+    }
+
+    public byte[] getBytesRead() {
+        byte[] dataToReturn = bytesRead.clone();
+        bytesRead = null;
+        return dataToReturn;
     }
 
     @Override
     public void onBytesWritten(byte[] bytes, int numberOfBytesWritten, BluetoothSocketIoThread bluetoothSocketIoThread) {
-        Log.v(TAG, "onBytesWritten: Sent " + numberOfBytesWritten + " bytes to peer "
+        Log.v(TAG, "onBytesWritten: Sent " + numberOfBytesWritten + " bytes & msg: " + new String(bytes)+" to peer "
                 + (bluetoothSocketIoThread.getPeerProperties() != null
                 ? bluetoothSocketIoThread.getPeerProperties().toString() : "<no ID>"));
     }
