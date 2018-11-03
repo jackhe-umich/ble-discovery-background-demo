@@ -13,6 +13,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import org.thaliproject.p2p.btconnectorlib.utils.CommonUtils;
 
@@ -420,9 +421,11 @@ public class BluetoothManager {
                 Object btManagerService = mServiceField.get(mBluetoothAdapter);
 
                 if (btManagerService != null) {
-                    bluetoothMacAddress = (String) btManagerService.getClass().getMethod("getAddress").invoke(btManagerService);
+                    //bluetoothMacAddress = (String) btManagerService.getClass().getMethod("getAddress").invoke(btManagerService);
+                    bluetoothMacAddress = Settings.Secure.getString(mContext.getContentResolver(),
+                            "bluetooth_address");
                 }
-            } catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            } catch (NoSuchFieldException |/* NoSuchMethodException |*/ IllegalAccessException /*| InvocationTargetException*/ e) {
                 Log.e(TAG, "getBluetoothMacAddress: Failed to get Bluetooth address " + e.getMessage(), e);
             }
         }
