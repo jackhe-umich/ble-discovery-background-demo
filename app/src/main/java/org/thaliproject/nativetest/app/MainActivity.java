@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements
             // result of the request.
         }
 
-        mConnectionEngine.makeDeviceDiscoverable();
+        //mConnectionEngine.makeDeviceDiscoverable();
         mConnectionEngine.startBluetoothDeviceDiscovery();
     }
 
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements
         Log.i(TAG, "onRestart");
         super.onRestart();
         mConnectionEngine.start();
-        mConnectionEngine.makeDeviceDiscoverable();
+        //mConnectionEngine.makeDeviceDiscoverable();
         mConnectionEngine.startBluetoothDeviceDiscovery();
     }
 
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity implements
         super.onStop();
     }
 
-    @Override
+    //@Overridediscoverable
     public void onDestroy() {
         Log.i(TAG, "onDestroy");
         destroyEngine();
